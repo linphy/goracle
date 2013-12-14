@@ -89,6 +89,22 @@ type tx struct {
 	cx *oracle.Connection //Transaction ?
 }
 
+func (c *conn) Exec(query string, args []driver.Value) (driver.Result, error) {
+	stmt1, err := c.Prepare(query)
+	defer stmt1.Close()
+	if err != nil {
+		return nil, filterErr(err)
+	}
+	result, err := stmt1.Exec(args)
+	if err != nil {
+		return nil, filterErr(err)
+	}
+	if err := c.cx.Commit(); err != nil {
+		return nil, filterErr(err)
+	}
+	return result, nil
+}
+
 // begins a transaction
 func (c conn) Begin() (driver.Tx, error) {
 	if !c.cx.IsConnected() {
